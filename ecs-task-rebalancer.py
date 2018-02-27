@@ -64,40 +64,15 @@ def lambda_handler(event, context):
 
             print ("service : ", service)
 
-            #Get information about the task definition of the service
-            task_definition = service["taskDefinition"];
-
-            response = ecs.describe_task_definition(
-                taskDefinition=task_definition
-            )
-
-            taskDefinitionDescription = response["taskDefinition"]
-
-            containerDefinitions = taskDefinitionDescription["containerDefinitions"]
-            volumes = taskDefinitionDescription["volumes"]
-            family = taskDefinitionDescription["family"]
-
-            print ("containerDefinitions : ", containerDefinitions)
-            print ("volumes : ", volumes)
-            print ("family : ", family)
-
-            #Register a new version of the task_definition
-            response = ecs.register_task_definition(
-                family=family,
-                containerDefinitions=containerDefinitions,
-                volumes= volumes
-            )
-
-            newTaskDefinitionArn = response["taskDefinition"]["taskDefinitionArn"]
-            print "New task definition arn : " , newTaskDefinitionArn
-
             response = ecs.update_service(
                 cluster=cluster_name,
                 service=service["serviceArn"],
-                taskDefinition=newTaskDefinitionArn
+                forceNewDeployment=True
             )
 
-            print ("Updated the service ", service, "with new task definition")
+            print ("Rebalanced the service ", service)
+
+        print ("Rebalanced all of the services")
 
     ###############################################
 
