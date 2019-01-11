@@ -43,8 +43,15 @@ def lambda_handler(event, context):
             else:
                 isTruncated = "False"
 
-            services = response["serviceArns"]
-            for service in services:
+            #For each service, figure out the taskDefinition, register a new version
+            #and update the service -- This sequence will rebalance the tasks on all
+            #available and connected instances
+            desc_response = ecs.describe_services(
+                cluster=cluster_name,
+                services=response["serviceArns"]
+            )
+
+            for service in desc_response["services"]:
                 all_services.append(service)
 
         return all_services
@@ -53,16 +60,7 @@ def lambda_handler(event, context):
     def rebalance_tasks():
         all_services = get_cluster_services()
 
-        #For each service, figure out the taskDefinition, register a new version
-        #and update the service -- This sequence will rebalance the tasks on all
-        #available and connected instances
-        response = ecs.describe_services(
-            cluster=cluster_name,
-            services=all_services
-        )
-
-        described_services = response["services"]
-        for service in described_services:
+        for service in all_services:
 
             print ("service : ", service)
 
